@@ -1,0 +1,307 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 100%;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+}
+
+.table-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+    max-width: 300px;
+    min-width: 250px;
+}
+
+.table-item {
+    margin-bottom: 10px;
+    display: flex;
+}
+
+.button-table-name {
+    width: 65%;
+    color: black;
+    background-color: #aed5ff;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.info-button {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.info-button:hover {
+    background-color: #0056b3;
+}
+
+.table-info {
+    padding-left: 20px;
+    flex: 2;
+}
+
+.table-content {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.table-content,
+.table-content td {
+    max-width: 300px;
+    word-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table-content th,
+.table-content td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.table-content th {
+    background-color: #f2f2f2;
+}
+
+.form-input {
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    height: 30px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.form-select {
+    margin-right: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray"><path d="M5.5 7l3.5 3.5 3.5-3.5H5.5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.sql-input {
+    display: block;
+}
+
+#sql-query {
+    width: 50%;
+    height: 40%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.sql-input button {
+    margin-top: 10px;
+}
+
+.action-column {
+    width: 100px;
+}
+
+.btn {
+    width: 100px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #fff;
+    text-align: center;
+}
+
+.btn-1 {
+    padding: 0 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #fff;
+    height: 40px;
+    margin-left: 10px;
+    line-height: 40px;
+}
+
+.btn-reset,
+.btn-cancel,
+.btn-download-cvs {
+    background-color: #daa209;
+}
+
+.btn-add,
+.btn-insert,
+.btn-update,
+.btn-commit,
+.btn-import {
+    background-color: #1bae39;
+}
+
+.btn-2 {
+    padding: 0 2px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #fff;
+    height: 40px;
+    margin-left: 5px;
+    line-height: 40px;
+}
+
+.btn-apply,
+.btn-edit,
+.btn-transaction,
+.btn-export {
+    background-color: #007bff;
+}
+
+.btn-transaction,
+.btn-commit {
+    margin-right: 20px;
+}
+
+.btn-delete,
+.btn-rollback {
+    background-color: #dc3545;
+}
+
+.btn:hover {
+    opacity: 0.8;
+}
+
+.insert-section {
+    width: 100%;
+    min-width: 100px;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.top-bar {
+    background-color: #ccc;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.sql-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sql-input textarea {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 16px;
+    resize: none;
+}
+
+.sql-input button {
+    width: 300px;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.sql-input button:hover {
+    background-color: #0056b3;
+}
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+#openPopupBtn {
+    margin: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-content {
+    background-color: white;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+}

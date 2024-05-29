@@ -1,0 +1,11 @@
+.log-info {
+    padding: 10px;              /* Внутренний отступ */
+    margin-top: 10px;           /* Внешний отступ сверху */
+    background-color: #f9f9f9;  /* Цвет фона */
+    border: 1px solid #ccc;     /* Граница */
+    border-radius: 5px;         /* Радиус скругления углов */
+    font-family: Arial, sans-serif; /* Шрифт */
+    font-size: 14px;            /* Размер шрифта */
+    color: #333;                /* Цвет текста */
+    white-space: pre-line;      /* Сохранение перевода строки */
+}

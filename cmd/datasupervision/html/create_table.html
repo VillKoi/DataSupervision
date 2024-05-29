@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Table</title>
+    <link rel="stylesheet" type="text/css" href="/css/create-table.css" />
+</head>
+
+<body>
+    <div class="top-bar">
+        <a href="/schemas">Back to Schemas</a>
+        <a href="/{{.Schema}}/pre-join">To Join Tables</a>
+        <a href="/{{.Schema}}/tables">To Table Data</a>
+        <a href="/{{.Schema}}/schema">To Tables Schema</a>
+    </div>
+    <div class="container">
+        <h2>Create Table</h2>
+        <form>
+            <div class="form-group">
+                <label for="tableName">Table Name:</label>
+                <input type="text" id="tableName" name="tableName" required>
+            </div>
+            <div id="columnsContainer"></div>
+            <div class="form-group">
+                <button type="button" onclick="addColumn()">Add Column</button>
+            </div>
+            <div class="form-group">
+                <button type="submit" onclick="createTable()">Create Table</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function addColumn() {
+            const columnsContainer = document.getElementById('columnsContainer');
+            const columnIndex = columnsContainer.children.length;
+
+            const formDiv = document.createElement('div');
+            formDiv.className = 'form-group';
+            formDiv.id = 'form-group';
+
+            const columnLabel = document.createElement('label');
+            columnLabel.textContent = `Column ${columnIndex + 1}:`;
+
+            const columnDiv = document.createElement('div');
+            columnDiv.className = 'column-group';
+            columnDiv.id = 'column-group';
+            // Чекбокс primary key
+            const columnPrimaryKey = document.createElement('input');
+            columnPrimaryKey.type = 'checkbox';
+            columnPrimaryKey.name = `columns[${columnIndex}][primary]`;
+            columnPrimaryKey.id = `columns[${columnIndex}][primary]`;
+
+            // Добавление класса для иконки
+            const columnPrimaryKeyLabel = document.createElement('label');
+            columnPrimaryKeyLabel.className = 'key-icon';
+            columnPrimaryKeyLabel.for = `columns[${columnIndex}][primary]`;
+            // Ввод названия стоблца
+            const columnNameInput = document.createElement('input');
+            columnNameInput.type = 'text';
+            columnNameInput.name = `columns[${columnIndex}][name]`;
+            columnNameInput.id = `columns[${columnIndex}][name]`;
+            columnNameInput.placeholder = 'Column Name';
+            // Вывод типа столбца
+            const columnTypeSelect = document.createElement('select');
+            columnTypeSelect.name = `columns[${columnIndex}][type]`;
+            columnTypeSelect.class = `columns[type]`;
+            columnTypeSelect.id = `columns[${columnIndex}][type]`;
+            // Чекбокс not null
+            const columnNotNull = document.createElement('input');
+            columnNotNull.type = 'checkbox';
+            columnNotNull.name = `columns[${columnIndex}][notnull]`;
+            columnNotNull.id = `columns[${columnIndex}][notnull]`;
+
+            const columnNotNullLabel = document.createElement('label');
+            columnNotNullLabel.textContent = 'NOT NULL';
+            // Чекбокс foreign key
+            const columnForeign = document.createElement('input');
+            columnForeign.type = 'checkbox';
+            columnForeign.name = `columns[${columnIndex}][foreign]`;
+            columnForeign.id = `columns[${columnIndex}][foreign]`;
+
+            const foreignDiv = document.createElement('div');
+            foreignDiv.className = 'column-group';
+
+            foreignDiv.style.display = 'none';
+            // Select foreign table
+            const foreignTable = document.createElement('select');
+            foreignTable.className = 'foreign-table';
+            foreignTable.id = `foreign-table[${columnIndex}][foreign]`;
+            // Select foreign column
+            const foreignColumn = document.createElement('select');
+            foreignColumn.className = 'foreign-column';
+            foreignColumn.id = `foreign-column[${columnIndex}][foreign]`;
+
+            // Очистка списка таблиц
+            foreignTable.innerHTML = "";
+
+            var tables = JSON.parse(`{{.Tables}}`);
+            console.log("tables", tables);
+
+            // Заполнение списка таблиц
+            tables.forEach(table => {
+                const option = document.createElement("option");
+                option.value = table;
+                option.textContent = table; // Важно использовать textContent для текстового содержимого
+                foreignTable.appendChild(option);
+            });
+
+
+            // Добавляем обработчик события change
+            columnForeign.addEventListener('change', function () {
+                // Если чекбокс отмечен, показываем дополнительное текстовое поле
+                if (this.checked) {
+                    foreignDiv.style.display = 'block';
+                    populateColumns(`foreign-table[${columnIndex}][foreign]`, `foreign-column[${columnIndex}][foreign]`)
+                } else {
+                    // Если чекбокс не отмечен, скрываем дополнительное текстовое поле
+                    foreignDiv.style.display = 'none';
+                }
+            });
+
+            // Добавляем обработчик события change
+            foreignTable.addEventListener('change', function () {
+                populateColumns(`foreign-table[${columnIndex}][foreign]`, `foreign-column[${columnIndex}][foreign]`)
+            });
+
+            const columnForeignLabel = document.createElement('label');
+            columnForeignLabel.textContent = 'Foreign Key';
+
+            fetch('/column-types')
+                .then(response => response.json())
+                .then(dataTypes => {
+                    dataTypes.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type;
+                        option.textContent = type;
+                        columnTypeSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching data types:', error);
+                });
+
+
+            columnDiv.appendChild(columnPrimaryKey);
+            columnDiv.appendChild(columnPrimaryKeyLabel);
+            columnDiv.appendChild(columnNameInput);
+            columnDiv.appendChild(columnTypeSelect);
+            columnDiv.appendChild(columnNotNull);
+            columnDiv.appendChild(columnNotNullLabel);
+            columnDiv.appendChild(columnForeign);
+            columnDiv.appendChild(columnForeignLabel);
+
+            foreignDiv.appendChild(foreignTable);
+            foreignDiv.appendChild(foreignColumn);
+
+            formDiv.appendChild(columnLabel);
+            formDiv.appendChild(columnDiv);
+            formDiv.appendChild(foreignDiv);
+
+            columnsContainer.appendChild(formDiv);
+
+            document.getElementById('columnsContainer') = columnsContainer;
+        }
+
+        function populateColumns(tableSelectId, columnSelectId) {
+            console.log("test join");
+            const tableSelect = document.getElementById(tableSelectId);
+            const columnSelect = document.getElementById(columnSelectId);
+
+            // Получение выбранной таблицы
+            const selectedTable = tableSelect.value;
+
+            // Получение столбцов для выбранной таблицы
+            const tables = JSON.parse(`{{ .TablesJSON}}`);
+            const columns = tables[selectedTable] || [];
+
+            // Очистка списка столбцов
+            columnSelect.innerHTML = "";
+
+            // Заполнение списка столбцов
+            columns.forEach(column => {
+                const option = document.createElement("option");
+                option.value = column;
+                option.textContent = column;
+                columnSelect.appendChild(option);
+            });
+        }
+
+        function createTable(tableName) {
+            console.log(window.location.pathname);
+            const schemaName = window.location.pathname.split('/')[1];
+            console.log(schemaName);
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var tableInfo = JSON.parse(xhr.responseText);
+                    console.log("success");
+                    return
+                }
+                console.log("wrong");
+            };
+
+            const columnsContainer = document.getElementById('columnsContainer');
+            const columnIndex = columnsContainer.children.length;
+            console.log(columnsContainer, columnIndex);
+
+
+            var columns = [];
+            for (let i = 0; i < columnIndex; i++) {
+                const columnsName = document.querySelector(`[name="columns[${i}][name]"]`).value;
+                const columnsType = document.querySelector(`[name="columns[${i}][type]"]`).value;
+                const primary = document.querySelector(`[name="columns[${i}][primary]"]`);
+                const notnull = document.querySelector(`[name="columns[${i}][notnull]"]`);
+
+                const foreign = document.querySelector(`[name="columns[${i}][foreign]"]`);
+                if (foreign.checked) {
+                    const foreignTable = document.getElementById(`foreign-table[${i}][foreign]`).value;
+                    const foreignColumn = document.getElementById(`foreign-column[${i}][foreign]`).value;
+
+                    columns.push({
+                        "name": columnsName,
+                        "type": columnsType,
+                        "primary": primary.checked,
+                        "notnull": notnull.checked,
+                        "foreignKey": {
+                            "foreignTable": foreignTable,
+                            "foreignColumn": foreignColumn
+                        }
+                    });
+
+                } else {
+                    columns.push({
+                        "name": columnsName,
+                        "type": columnsType,
+                        "primary": primary.checked,
+                        "notnull": notnull.checked,
+                    });
+                }
+            }
+
+            console.log("postData", columns);
+
+            var tableName = document.getElementById(`tableName`).value;
+            var postData = JSON.stringify({
+                "tableName": tableName,
+                "columns": columns
+            });
+
+            console.log("postData", postData);
+
+            var url = `/${schemaName}/create-table`;
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            xhr.send(postData);
+        }
+
+    </script>
+</body>
+
+</html>

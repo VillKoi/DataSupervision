@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tables Information</title>
+    <link rel="stylesheet" type="text/css" href="/css/tables.css" />
+    <link rel="stylesheet" type="text/css" href="/css/logs.css" />
+</head>
+
+<body>
+    <div class="full-screan">
+        <div class="top-bar">
+            <a href="/schemas">Back to Schemas</a>
+            <button class="info-button" onclick="createSQLInput('{{.}}')">Create SQL Input</button>
+            <a href="/{{.SchemaName}}/pre-join">To Join Tables</a>
+            <a href="/{{.SchemaName}}/render-create-table">To Create Table</a>
+            <a href="/{{.SchemaName}}/schema">To Tables Schema</a>
+        </div>
+        <div class="container">
+
+            <ul class="table-list">
+                {{range $index, $table := .Tables}}
+                <li class="table-item">
+                    <button class="button-table-name" onclick="getTableData('{{$table}}')">{{$table}}</button>
+                    <button id="openPopupBtn-{{$index}}" class="btn-2  btn-export openPopupBtn">Export/Import</button>
+
+                    <div id="popup-{{$index}}" class="popup">
+                        <div class="popup-content">
+                            <span id="closePopupBtn-{{$index}}" class="close">&times;</span>
+                            <div class="section">
+                                <h3>Export</h3>
+                                <button class="btn-1 btn-export"
+                                    onclick="downloadTableDataJson('{{$table}}')">Json</button>
+                                <button class="btn-1 btn-download-cvs"
+                                    onclick="downloadTableDataCSV('{{$table}}')">CSV</button>
+                            </div>
+
+                            <div class="section">
+                                <h3>Import</h3>
+                                <button class="btn-1 btn-import"
+                                    onclick="handleFileImportJson('{{$table}}')">Json</button>
+                                <button class="btn-1 btn-other-import"
+                                    onclick="handleFileImportCSV('{{$table}}')">CSV</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </li>
+                {{end}}
+            </ul>
+            <div class="table-info" id="table-info">
+            </div>
+        </div>
+        <div class="log-info" id="log-info"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const openPopupButtons = document.querySelectorAll('.openPopupBtn');
+            const popups = document.querySelectorAll('.popup');
+            const closePopupButtons = document.querySelectorAll('.close');
+
+            openPopupButtons.forEach((btn, index) => {
+                btn.addEventListener('click', function () {
+                    const popup = document.getElementById(`popup-${index}`);
+                    popup.style.display = 'flex';
+                });
+            });
+
+            closePopupButtons.forEach((btn, index) => {
+                btn.addEventListener('click', function () {
+                    const popup = document.getElementById(`popup-${index}`);
+                    popup.style.display = 'none';
+                });
+            });
+
+            window.addEventListener('click', function (event) {
+                popups.forEach((popup, index) => {
+                    if (event.target === popup) {
+                        popup.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        function getTableData(tableName) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var tableData = JSON.parse(xhr.responseText);
+                    displayTableData(tableName, tableData);
+                }
+            };
+            xhr.open("GET", "/{{.SchemaName}}/tabledata/" + tableName, true);
+            xhr.send();
+        }
+
+        function downloadTableDataJson(tableName) {
+            fetch("/{{.SchemaName}}/download/json/" + tableName)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'data.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(err => console.error('Download error:', err));
+        }
+
+        function handleFileImportJson(tableName) {
+            console.log("handleFileImportJson");
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            fileInput.onchange = () => {
+                const file = fileInput.files[0];
+                if (file) {
+                    uploadFile(file);
+                }
+            };
+            fileInput.click();
+        }
+
+        function uploadFile(file) {
+            console.log("uploadFile");
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/{{.SchemaName}}/insert-rows/json', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('File uploaded successfully', data);
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                });
+        }
+
+        function downloadTableDataCSV(tableName) {
+            console.log("test 2 downloadTableDataCVS");
+            fetch('/{{.SchemaName}}/download/csv/' + tableName)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = tableName + '.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => console.error('There was a problem with the fetch operation:', error));
+        }
+
+        function handleFileImportCSV(tableName) {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.csv';
+            fileInput.onchange = () => {
+                const file = fileInput.files[0];
+                if (file) {
+                    uploadFileCSV(file, tableName);
+                }
+            };
+            fileInput.click();
+        }
+
+        function uploadFileCSV(file, tableName) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(`/{{.SchemaName}}/insert-rows/csv?tableName=${tableName}`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('File uploaded successfully', data);
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                });
+        }
+
+        function applyFilter(tableName, tableColumn) {
+            var selectedColumn = document.getElementById("column-select").value;
+            var filterValue = document.getElementById("filter-value").value;
+
+            // Выполнение действий с выбранным столбцом и значением фильтра
+            console.log("Применение фильтра:");
+            console.log("Таблица:", tableName);
+            console.log("Столбец:", selectedColumn);
+            console.log("Значение фильтра:", filterValue);
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var tableData = JSON.parse(xhr.responseText);
+                    displayTableData(tableName, tableData, selectedColumn, filterValue);
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            var params = "tableName" + "=" + tableName + "&" + "columnName" + "=" + selectedColumn + "&" + "filterValue" + "=" + filterValue;
+            xhr.open("GET", "/{{.SchemaName}}/applyfilter" + "?" + params, true);
+            xhr.send();
+        }
+
+        function executeSQLQuery() {
+            var query = document.getElementById("sql-query").value;
+
+            console.log("SQL Query:", query);
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    console.log(xhr.responseText);
+                    data = JSON.parse(xhr.responseText);
+                    console.log('Success:', data);
+
+                    const tableInfoDiv = document.createElement('div');
+                    tableInfoDiv.className = 'table-info';
+                    tableInfoDiv.id = 'table-info';
+
+                    const sqlInputDiv = document.createElement('div');
+                    sqlInputDiv.className = 'sql-input';
+
+                    const sqlQuery = document.getElementById("sql-query").value;
+
+                    const textarea = document.createElement('textarea');
+                    textarea.id = 'sql-query';
+                    textarea.placeholder = 'Enter SQL query';
+                    textarea.textContent = sqlQuery;
+
+                    const executeButton = document.createElement('button');
+                    executeButton.textContent = 'Execute';
+                    executeButton.onclick = executeSQLQuery;
+
+                    sqlInputDiv.appendChild(textarea);
+                    sqlInputDiv.appendChild(executeButton);
+
+                    tableInfoDiv.appendChild(sqlInputDiv);
+
+                    if (data.Columns && data.Rows) {
+                        const tableData = buildTableData(data);
+                        tableInfoDiv.appendChild(tableData);
+                    } else {
+                        const noDataMessage = document.createElement('p');
+                        noDataMessage.textContent = 'No data available to show.';
+                        tableInfoDiv.appendChild(noDataMessage);
+                    }
+
+                    const tableInfoContainer = document.getElementById('table-info');
+                    tableInfoContainer.innerHTML = '';
+                    tableInfoContainer.appendChild(tableInfoDiv);
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            var postData = { "query": query };
+            var url = `/{{.SchemaName}}/sql-input`;
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify(postData));
+        }
+
+        function log(message) {
+            var infoHtml = message + "\n";
+
+            document.getElementById("log-info").innerHTML = infoHtml;
+        }
+
+
+        function createSQLInput() {
+            const tableInfoDiv = document.createElement('div');
+            tableInfoDiv.className = 'table-info';
+            tableInfoDiv.id = 'table-info';
+
+            const sqlInputDiv = document.createElement('div');
+            sqlInputDiv.className = 'sql-input';
+
+            const textarea = document.createElement('textarea');
+            textarea.id = 'sql-query';
+            textarea.placeholder = 'Enter SQL query';
+
+            const executeButton = document.createElement('button');
+            executeButton.textContent = 'Execute';
+            executeButton.onclick = executeSQLQuery;
+
+            sqlInputDiv.appendChild(textarea);
+            sqlInputDiv.appendChild(executeButton);
+            tableInfoDiv.appendChild(sqlInputDiv);
+
+            document.getElementById('table-info').innerHTML = '';
+            document.getElementById('table-info').appendChild(tableInfoDiv);
+        }
+
+        function startTransaction() {
+            console.log("startTransaction");
+
+            document.getElementById("btn-transaction").style.display = 'none';
+            document.getElementById("btn-rollback").style.display = 'inline';
+            document.getElementById("btn-commit").style.display = 'inline';
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var tableData = JSON.parse(xhr.responseText);
+                    log("success")
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            xhr.open("GET", "/{{.SchemaName}}/begin-transaction", true);
+            xhr.send();
+        }
+
+        function Rollback() {
+            console.log("Rollback");
+
+            document.getElementById("btn-transaction").style.display = 'inline';
+            document.getElementById("btn-rollback").style.display = 'none';
+            document.getElementById("btn-commit").style.display = 'none';
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var tableData = JSON.parse(xhr.responseText);
+                    log("success")
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            xhr.open("GET", "/{{.SchemaName}}/rollback", true);
+            xhr.send();
+        }
+
+
+        function Commit() {
+            console.log("Commit");
+
+            document.getElementById("btn-transaction").style.display = 'inline';
+            document.getElementById("btn-rollback").style.display = 'none';
+            document.getElementById("btn-commit").style.display = 'none';
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var tableData = JSON.parse(xhr.responseText);
+                    log("success")
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            xhr.open("GET", "/{{.SchemaName}}/commit", true);
+            xhr.send();
+        }
+
+
+        function buildFilter(tableName, tableData, selectedColumn, filterValue, insert) {
+            const filterDiv = document.createElement('div');
+
+            const transactionButton = document.createElement('button');
+            transactionButton.className = 'btn-1 btn-transaction';
+            transactionButton.id = 'btn-transaction';
+            transactionButton.onclick = startTransaction;
+            transactionButton.textContent = 'Start Transaction';
+
+            const rollbackButton = document.createElement('button');
+            rollbackButton.className = 'btn-1 btn-rollback';
+            rollbackButton.id = 'btn-rollback';
+            rollbackButton.onclick = Rollback;
+            rollbackButton.textContent = 'RollBack';
+
+            const commitButton = document.createElement('button');
+            commitButton.className = 'btn-1 btn-commit';
+            commitButton.id = 'btn-commit';
+            commitButton.onclick = Commit;
+            commitButton.textContent = 'Commit';
+
+            if (document.getElementById("btn-transaction") && document.getElementById("btn-transaction").style.display == 'none') {
+                transactionButton.style.display = 'none';
+                rollbackButton.style.display = 'inline';
+                commitButton.style.display = 'inline';
+            } else {
+                rollbackButton.style.display = 'none';
+                commitButton.style.display = 'none';
+            }
+
+            filterDiv.appendChild(transactionButton);
+            filterDiv.appendChild(rollbackButton);
+            filterDiv.appendChild(commitButton);
+
+            const labelColumnSelect = document.createElement('label');
+            labelColumnSelect.className = 'form-label';
+            labelColumnSelect.htmlFor = 'column-select';
+            labelColumnSelect.textContent = 'Select Column:';
+            filterDiv.appendChild(labelColumnSelect);
+
+            const columnSelect = document.createElement('select');
+            columnSelect.id = 'column-select';
+            columnSelect.className = 'form-select';
+            tableData.Columns.forEach((column) => {
+                const option = document.createElement('option');
+                option.value = column;
+                option.textContent = column;
+                if (selectedColumn && selectedColumn == column) {
+                    option.selected = true;
+                }
+                columnSelect.appendChild(option);
+            });
+            filterDiv.appendChild(columnSelect);
+
+            const labelFilterValue = document.createElement('label');
+            labelFilterValue.className = 'form-label';
+            labelFilterValue.htmlFor = 'filter-value';
+            labelFilterValue.textContent = 'Filter Value:';
+            filterDiv.appendChild(labelFilterValue);
+
+            const filterValueInput = document.createElement('input');
+            filterValueInput.type = 'text';
+            filterValueInput.id = 'filter-value';
+            filterValueInput.className = 'form-input';
+            if (filterValue) {
+                filterValueInput.value = filterValue;
+            }
+            filterDiv.appendChild(filterValueInput);
+
+            const applyButton = document.createElement('button');
+            applyButton.className = 'btn-1 btn-apply';
+            applyButton.textContent = 'Apply Filter';
+            applyButton.onclick = () => applyFilter(tableName, tableData.Columns[0]);
+            filterDiv.appendChild(applyButton);
+
+            if (filterValue) {
+                const resetButton = document.createElement('button');
+                resetButton.className = 'btn-1 btn-reset';
+                resetButton.textContent = 'Reset Filter';
+                resetButton.onclick = () => getTableData(tableName, tableData.Columns[0]);
+                filterDiv.appendChild(resetButton);
+            }
+
+            const tableDataString = encodeURIComponent(JSON.stringify(tableData));
+
+            if (insert) {
+                const cancelButton = document.createElement('button');
+                cancelButton.className = 'btn-1 btn-cancel';
+                cancelButton.textContent = 'Cancel';
+                if (filterValue) {
+                    cancelButton.onclick = () => closeAddDataForm(tableName, tableDataString, selectedColumn, filterValue);
+                } else {
+                    cancelButton.onclick = () => closeAddDataForm(tableName, tableDataString);
+                }
+                filterDiv.appendChild(cancelButton);
+            } else {
+                const addButton = document.createElement('button');
+                addButton.className = 'btn-1 btn-add';
+                addButton.textContent = 'Add Data';
+                if (filterValue) {
+                    addButton.onclick = () => showAddDataForm(tableName, tableDataString, selectedColumn, filterValue);
+                } else {
+                    addButton.onclick = () => showAddDataForm(tableName, tableDataString);
+                }
+                filterDiv.appendChild(addButton);
+            }
+
+            return filterDiv;
+        }
+
+
+        function displayTableData(tableName, tableData, selectedColumn, filterValue, insert) {
+            console.log("displayTableData", tableData);
+            console.log("insert", insert);
+
+            const tableInfo = document.createElement('div');
+            const heading = document.createElement('h2');
+            heading.textContent = `Table Data: ${tableData.TableName}`;
+            tableInfo.appendChild(heading);
+
+            const filterField = buildFilter(tableName, tableData, selectedColumn, filterValue, insert);
+            tableInfo.appendChild(filterField);
+
+            if (insert) {
+                var newRow = [];
+                tableData.Columns.forEach(function (column, index) {
+                    var inputElement = document.createElement('input');
+                    inputElement.className = 'insert-section';
+                    inputElement.type = 'text';
+                    inputElement.id = 'insert-value-' + index;
+
+                    var cell = document.createElement('td');
+                    cell.appendChild(inputElement);
+                    newRow.push(cell);
+                });
+
+                if (tableData.Rows) {
+                    tableData.Rows.unshift(newRow);
+                } else {
+                    tableData.Rows = [newRow];
+                }
+            } else {
+                const addDataForm = document.createElement('div');
+                addDataForm.id = 'addDataForm';
+                addDataForm.style.display = 'none';
+
+                const dataForm = document.createElement('form');
+                dataForm.id = 'dataForm';
+                dataForm.onsubmit = function () { addData(); return false; };
+
+                const submitButton = document.createElement('button');
+                submitButton.type = 'submit';
+                submitButton.textContent = 'Submit';
+
+                dataForm.appendChild(submitButton);
+                addDataForm.appendChild(dataForm);
+                tableInfo.appendChild(addDataForm);
+            }
+
+            if (tableData.Columns && tableData.Rows) {
+                const tableDataContent = buildTableData(tableData, tableName);
+                tableInfo.appendChild(tableDataContent);
+            } else {
+                const noDataMessage = document.createElement('p');
+                noDataMessage.textContent = 'No data available for this table.';
+                tableInfo.appendChild(noDataMessage);
+            }
+
+            const tableInfoContainer = document.getElementById("table-info");
+            tableInfoContainer.innerHTML = '';
+            tableInfoContainer.appendChild(tableInfo);
+        }
+
+        function buildTableData(tableData, tableName, editRowIndex) {
+            const table = document.createElement('table');
+            table.className = 'table-content';
+            table.id = 'table-content';
+            table.setAttribute('data-sort-direction', 'asc');
+
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+
+            if (tableName) {
+                const actionHeader = document.createElement('th');
+                actionHeader.className = 'action-column';
+                actionHeader.textContent = 'Action';
+                headerRow.appendChild(actionHeader);
+            }
+
+            tableData.Columns.forEach((column, columnIndex) => {
+                const columnHeader = document.createElement('th');
+                columnHeader.className = 'sortable';
+                columnHeader.onclick = () => sortTable(columnIndex + (tableName ? 1 : 0));
+                columnHeader.textContent = column;
+                headerRow.appendChild(columnHeader);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            tableData.Rows.forEach((row, rowIndex) => {
+                const rowElement = document.createElement('tr');
+
+                if (tableName) {
+                    const actionCell = document.createElement('td');
+                    if (rowIndex === 0 && row[0] instanceof HTMLElement && row[0].querySelector('input')) {
+                        const insertButton = document.createElement('button');
+                        insertButton.className = 'btn btn-insert';
+                        insertButton.textContent = 'Insert';
+                        insertButton.onclick = () => insertRow(tableName, encodeURIComponent(JSON.stringify(tableData.Columns)));
+                        actionCell.appendChild(insertButton);
+                    } else {
+                        console.log(editRowIndex, rowIndex);
+                        const actionDiv = document.createElement('div');
+                        if (editRowIndex && editRowIndex === rowIndex) {
+                            console.log(editRowIndex, rowIndex);
+                            const updateButton = document.createElement('button');
+                            updateButton.className = 'btn btn-update';
+                            updateButton.textContent = 'Submit';
+                            updateButton.onclick = () => updateRow(tableName, rowIndex, encodeURIComponent(JSON.stringify(tableData)));
+                            actionDiv.appendChild(updateButton);
+
+                            const cancelButton = document.createElement('button');
+                            cancelButton.className = 'btn btn-cancel';
+                            cancelButton.textContent = 'Cancel';
+                            cancelButton.onclick = () => updateRow(tableName, rowIndex, encodeURIComponent(JSON.stringify(tableData)), true);
+                            actionDiv.appendChild(cancelButton);
+                        } else {
+                            const editButton = document.createElement('button');
+                            editButton.className = 'btn btn-edit';
+                            editButton.textContent = 'Edit';
+                            editButton.onclick = () => editRow(tableName, rowIndex, encodeURIComponent(JSON.stringify(tableData)));
+                            actionDiv.appendChild(editButton);
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.className = 'btn btn-delete';
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.onclick = () => deleteRow(tableName, rowIndex, encodeURIComponent(JSON.stringify(tableData)));
+                            actionDiv.appendChild(deleteButton);
+                        }
+                        actionCell.appendChild(actionDiv);
+                    }
+                    rowElement.appendChild(actionCell);
+                }
+
+                row.forEach((cell, cellIndex) => {
+                    const cellElement = document.createElement('td');
+                    if (editRowIndex && editRowIndex === rowIndex) {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'insert-section';
+                        input.id = `update-value-${cellIndex}`;
+                        console.log(editRowIndex, rowIndex);
+                        input.value = cell;
+                        console.log(editRowIndex, rowIndex);
+                        cellElement.appendChild(input);
+                    } else if (cell instanceof HTMLElement) {
+                        cellElement.appendChild(cell);
+                    } else {
+                        console.log("cell", cell);
+                        if (cell) {
+                            cellElement.textContent = cell;
+                        } else {
+                            cellElement.textContent = "null";
+                        }
+                    }
+                    rowElement.appendChild(cellElement);
+                });
+
+                tbody.appendChild(rowElement);
+            });
+
+            table.appendChild(tbody);
+
+            return table;
+        }
+
+
+        function sortTable(columnIndex) {
+            var table = document.getElementById("table-content");
+            var tbody = table.getElementsByTagName("tbody")[0];
+            console.log(table, tbody);
+            var rows = Array.from(tbody.rows);
+            var sortDirection = table.getAttribute("data-sort-direction") === "asc" ? "desc" : "asc";
+            table.setAttribute("data-sort-direction", sortDirection);
+
+            console.log(`Sorting by column ${columnIndex} in ${sortDirection} order`);
+
+            rows.sort(function (a, b) {
+                var cellA = a.cells[columnIndex].innerText.toLowerCase();
+                var cellB = b.cells[columnIndex].innerText.toLowerCase();
+
+                // Проверка, являются ли значения числовыми
+                var numA = parseFloat(cellA);
+                var numB = parseFloat(cellB);
+
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    cellA = numA;
+                    cellB = numB;
+                }
+
+                if (sortDirection === "asc") {
+                    return cellA > cellB ? 1 : cellA < cellB ? -1 : 0;
+                } else {
+                    return cellA < cellB ? 1 : cellA > cellB ? -1 : 0;
+                }
+            });
+
+            // Перемещаем отсортированные строки обратно в таблицу
+            rows.forEach(function (row) {
+                tbody.appendChild(row);
+            });
+
+            console.log(tbody);
+
+            console.log('Sorting completed');
+        }
+
+        function insertRow(tableName, columnsString) {
+            var columns = JSON.parse(decodeURIComponent(columnsString));
+            console.log("insertRow: columns:", columns);
+
+            var row = new Map();
+            columns.forEach(function (column, index) {
+                var insertValue = document.getElementById("insert-value-" + index).value;
+                console.log("insertValue", index, insertValue);
+                row.set(column, insertValue);
+                console.log("row", row);
+            });
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    console.log(xhr.responseText);
+                    data = JSON.parse(xhr.responseText);
+                    console.log('Success:', data);
+
+                    getTableData(tableName);
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            var rowObject = Object.fromEntries(row);
+
+            var postData = JSON.stringify({ "row": rowObject });
+            console.log("postData", postData);
+
+            var url = "/{{.SchemaName}}/insert-row" + "?" + "tableName" + "=" + tableName;
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(postData);
+        }
+
+        function editRow(tableName, rowIndex, tableDataString) {
+            var tableData = JSON.parse(decodeURIComponent(tableDataString));
+            var editTable = buildTableData(tableData, tableName, rowIndex, tableDataString);
+
+            const tableInfoContainer = document.getElementById("table-content");
+            tableInfoContainer.innerHTML = '';
+            tableInfoContainer.appendChild(editTable);
+        }
+
+        function updateRow(tableName, rowIndex, tableDataString, notUpdate) {
+            var tableData = JSON.parse(decodeURIComponent(tableDataString));
+            console.log("updateRow", tableName, rowIndex, tableData)
+
+            if (notUpdate) {
+                getTableData(tableName);
+                return
+            }
+
+            var row = {
+                "columns": [],
+                "oldRow": [],
+                "newRow": []
+            };
+            tableData.Columns.forEach(function (column, index) {
+                var newValue = document.getElementById("update-value-" + index).value;
+                var oldValue = tableData.Rows[rowIndex][index];
+                console.log("updateValue", index, oldValue, newValue);
+                row.columns.push(column);
+                row.oldRow.push(oldValue);
+                row.newRow.push(newValue);
+            });
+
+            console.log("row", row);
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    data = JSON.parse(xhr.responseText);
+                    console.log('Success:', data);
+
+                    getTableData(tableName);
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            var postData = JSON.stringify(row);
+            console.log("postData", postData);
+
+            var url = "/{{.SchemaName}}/update-row" + "?" + "tableName" + "=" + tableName;
+            xhr.open("PATCH", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(postData);
+        }
+
+        function deleteRow(tableName, rowIndex, tableDataString) {
+            var tableData = JSON.parse(decodeURIComponent(tableDataString));
+            console.log("deleteRow", tableName, rowIndex, tableData)
+
+            var row = new Map();
+            tableData.Columns.forEach(function (column, index) {
+                var deleteValue = tableData.Rows[rowIndex][index];
+                console.log("insertValue", index, deleteValue);
+                row.set(column, deleteValue);
+            });
+
+            console.log("row", row);
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    data = JSON.parse(xhr.responseText);
+                    console.log('Success:', data);
+
+                    getTableData(tableName);
+                } else {
+                    log(xhr.response);
+                }
+            };
+
+            var rowObject = Object.fromEntries(row);
+            var postData = JSON.stringify({ "row": rowObject });
+            console.log("postData", postData);
+
+            var url = "/{{.SchemaName}}/delete-row" + "?" + "tableName" + "=" + tableName;
+            xhr.open("PATCH", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(postData);
+        }
+        // Функция для отображения формы ввода данных
+        function showAddDataForm(tableName, tableDataString, selectedColumn, filterValue) {
+            var tableData = JSON.parse(decodeURIComponent(tableDataString));
+            displayTableData(tableName, tableData, selectedColumn, filterValue, true)
+        }
+
+        function closeAddDataForm(tableName, tableDataString, selectedColumn, filterValue) {
+            var tableData = JSON.parse(decodeURIComponent(tableDataString));
+            displayTableData(tableName, tableData, selectedColumn, filterValue)
+        }
+
+    </script>
+</body>
+
+</html>

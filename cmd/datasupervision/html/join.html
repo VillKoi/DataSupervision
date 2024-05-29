@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Join Example</title>
+    <link rel="stylesheet" type="text/css" href="/css/join.css" />
+</head>
+
+<body>
+    <main>
+        <div class="top-bar">
+            <a href="/schemas">Back to Schemas</a>
+            <a href="/{{.Schema}}/render-create-table">To Create Tables</a>
+            <a href="/{{.Schema}}/tables">To Table Data</a>
+            <a href="/{{.Schema}}/schema">To Tables Schema</a>
+        </div>
+        <div class="container">
+            <h2>Join Tables</h2>
+            <form id="join-form" class="join" action="/{{.Schema}}/join" method="POST">
+                <label for="table1">Table 1:</label>
+                <select id="table1" name="table1" onchange="populateColumns('table1', 'column1')">
+                    {{range $table, $columns := .Tables}}
+                    <option value="{{$table}}">{{$table}}</option>
+                    {{end}}
+                </select>
+
+                <label for="column1">Column from Table 1:</label>
+                <select id="column1" name="column1">
+                    <!-- Options will be populated via JavaScript -->
+                </select>
+
+                <br>
+
+                <label for="table2">Table 2:</label>
+                <select id="table2" name="table2" onchange="populateColumns('table2', 'column2')">
+                    {{range $table, $columns := .Tables}}
+                    <option value="{{$table}}">{{$table}}</option>
+                    {{end}}
+                </select>
+
+                <label for="column2">Column from Table 2:</label>
+                <select id="column2" name="column2">
+                    <!-- Options will be populated via JavaScript -->
+                </select>
+
+                <br>
+
+                <button type="submit" , class="btn">Join Tables</button>
+            </form>
+
+            <div id="join-results">
+                {{if .Results.Columns}}
+                <table class="table-content">
+                    <thead>
+                        <tr>
+                            {{range .Results.Columns}}
+                            <th>{{.}}</th>
+                            {{end}}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Results.Rows}}
+                        <tr>
+                            {{range .}}
+                            <td>{{.}}</td>
+                            {{end}}
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <p>No results to display.</p>
+                {{end}}
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function populateColumns(tableSelectId, columnSelectId) {
+            const tableSelect = document.getElementById(tableSelectId);
+            const columnSelect = document.getElementById(columnSelectId);
+
+            // Получение выбранной таблицы
+            const selectedTable = tableSelect.value;
+
+            // Получение столбцов для выбранной таблицы
+            const tables = JSON.parse(`{{ .TablesJSON}}`);
+            const columns = tables[selectedTable] || [];
+
+            // Очистка списка столбцов
+            columnSelect.innerHTML = "";
+
+            // Заполнение списка столбцов
+            columns.forEach(column => {
+                const option = document.createElement("option");
+                option.value = column;
+                option.textContent = column;
+                columnSelect.appendChild(option);
+            });
+        }
+
+        // Предварительное заполнение столбцов для первых выбранных таблиц
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("test join");
+            const tables = JSON.parse(`{{ .TablesJSON}}`);
+            populateColumns('table1', 'column1');
+            populateColumns('table2', 'column2');
+        });
+
+    </script>
+</body>
+
+</html>

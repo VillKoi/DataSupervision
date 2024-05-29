@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema</title>
+    <link rel="stylesheet"  type="text/css" href="/css/schema.css"/>
+    <script>
+        function deleteTable(tableName) {
+            if (!confirm(`Are you sure you want to delete the table ${tableName}?`)) {
+                return;
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("DELETE", `/{{.SchemaName}}/delete-table?name=${encodeURIComponent(tableName)}`, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    location.reload();
+                } else if (xhr.readyState == 4) {
+                    alert('Error deleting table');
+                }
+            };
+
+            xhr.send();
+        }
+    </script>
+</head>
+
+<body>
+    <div class="top-bar">
+        <a href="/schemas">Back to Schemas</a>
+        <a href="/{{.SchemaName}}/pre-join">To Join Tables</a>
+        <a href="/{{.SchemaName}}/tables">To Table Data</a>
+        <a href="/{{.SchemaName}}/render-create-table">To Create Table</a>
+    </div>
+    <div class="container">
+        <h1>Database Schema</h1>
+        <div class="table-container">
+            {{range .Tables}}
+            <div class="table">
+                <div class="table-header">
+                    <span>Table: {{.Name}}</span>
+                    <button onclick="deleteTable('{{.Name}}')">Delete</button>
+                </div>
+                <div><span class="element">Columns:</span></div>
+                <ul class="column-list">
+                    {{range .Columns}}
+                    <li>
+                        {{.Name}}:
+                        <span class="datatype">type - {{.DataType}}</span>,
+                        <span class="isnullable">is nullable - {{.IsNullable}}</span>
+                    </li>
+                    {{end}}
+                </ul>
+                <div><span class="element">Primary Keys:</span></div>
+                <ul class="column-list">
+                    {{range .PrimaryKeys}}
+                    <li>{{.}}</li>
+                    {{end}}
+                </ul>
+                <div><span class="element">Foreign Keys:</span></div>
+                <ul class="column-list">
+                    {{range .ForeignKeys}}
+                    <li>{{.Column}}<span class="datatype"> -></span> {{.ReferencedTable}}({{.ReferencedColumn}})</li>
+                    {{end}}
+                </ul>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</body>
+
+</html>
