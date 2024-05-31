@@ -592,7 +592,7 @@
                     } else {
                         console.log(editRowIndex, rowIndex);
                         const actionDiv = document.createElement('div');
-                        if (editRowIndex && editRowIndex === rowIndex) {
+                        if (editRowIndex !== null && editRowIndex === rowIndex) {
                             console.log(editRowIndex, rowIndex);
                             const updateButton = document.createElement('button');
                             updateButton.className = 'btn btn-update';
@@ -625,7 +625,7 @@
 
                 row.forEach((cell, cellIndex) => {
                     const cellElement = document.createElement('td');
-                    if (editRowIndex && editRowIndex === rowIndex) {
+                    if (editRowIndex !== null && editRowIndex === rowIndex) {
                         const input = document.createElement('input');
                         input.type = 'text';
                         input.className = 'insert-section';
