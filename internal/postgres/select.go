@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"datasupervision/internal/service"
 	"fmt"
+	"strconv"
 )
 
 func (db *DB) Select(query string, args ...any) (*service.TableData, error) {
@@ -59,13 +60,30 @@ func (db *DB) SelectTableData(schemaName, tableName string) (*service.TableData,
 	return tableData, nil
 }
 
-func (db *DB) SelectWithFilter(schemaName, tableName, columnName, filterValue string) (*service.TableData, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = $1", tableName, columnName)
+func (db *DB) SelectWithFilter(schemaName, tableName string, filter service.Filters) (*service.TableData, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s", schemaName, tableName)
+	args := []interface{}{}
 
-	tableData, err := db.Select(query, filterValue)
+	if filter.FilterValue != "" {
+		query = fmt.Sprintf("%s WHERE %s =", query, filter.ColumnName)
+		query += " $" + strconv.Itoa(len(args)+1)
+		args = append(args, filter.FilterValue)
+	}
+
+	if filter.Limit > 0 {
+		query += " LIMIT $" + strconv.Itoa(len(args)+1)
+		args = append(args, filter.Limit)
+	}
+
+	if filter.Offset > 0 {
+		query += " OFFSET $" + strconv.Itoa(len(args)+1)
+		args = append(args, filter.Offset)
+	}
+
+	tableData, err := db.Select(query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	return tableData, err
+	return tableData, nil
 }

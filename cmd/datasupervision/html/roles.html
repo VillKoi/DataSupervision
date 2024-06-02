@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/css/roles.css" />
+    <link rel="stylesheet" type="text/css" href="/css/top-bar.css" />
+    <title>User Roles Management</title>
+</head>
+
+<body>
+    <div class="top-bar">
+        <a href="/schemas">Back to Schemas</a>
+    </div>
+
+    <h1>User Roles Management</h1>
+    <div class="container-inline">
+        <div class="container">
+            <h2>Existing Roles</h2>
+            <ul id="rolesList">
+                {{range .Roles}}
+                <li>{{.Rolename}}</li>
+                {{else}}
+                <li>No roles found</li>
+                {{end}}
+            </ul>
+        </div>
+
+        <div class="container">
+            <h2>Existing Users</h2>
+            <ul id="usersList">
+                {{range .Users}}
+                <li>{{.Username}}</li>
+                {{else}}
+                <li>No users found</li>
+                {{end}}
+            </ul>
+        </div>
+
+        <div class="container">
+            <h2>Add Role</h2>
+            <div id="addRoleForm">
+                <input type="text" id="addRoleInput" name="rolename" placeholder="Role name" required>
+                <button type="submit" class="btn" onclick="addRole()">Add</button>
+            </div>
+            <h2>Delete Role</h2>
+            <div id="deleteRoleForm">
+                <input type="text" id="deleteRoleInput" name="rolename" placeholder="Role name" required>
+                <button type="submit" class="btn" onclick="deleteRole()">Delete</button>
+            </div>
+            <h2>Add User</h2>
+            <div id="addUsernameForm">
+                <input type="text" id="addUsernameInput" name="username" placeholder="Username" required>
+                <input type="password" id="password" name="password" placeholder="password" required>
+                <button type="submit" class="btn" onclick="addUsername()">Add</button>
+            </div>
+            <h2>Delete User</h2>
+            <div id="deleteUsernameForm">
+                <input type="text" id="deleteUsernameInput" name="username" placeholder="Username" required>
+                <button type="submit" class="btn" onclick="deleteUsername()">Delete</button>
+            </div>
+        </div>
+
+        <div class="container" id="log-info"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            console.log("message", message);
+            const logInfo = document.getElementById("log-info");
+            const infoHtml = document.createElement('p');
+            infoHtml.textContent = message;
+            logInfo.appendChild(infoHtml);
+        }
+
+        async function sendRequest(url, data, method) {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: data ? new URLSearchParams(data) : null
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
+            return response.json();
+        }
+
+        async function updateRolesList() {
+            const list = document.getElementById('rolesList');
+            try {
+                const roles = await sendRequest('/roles', null, 'GET');
+                list.innerHTML = '';
+                roles.forEach(role => {
+                    const li = document.createElement('li');
+                    li.textContent = role.rolename;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+
+        async function updateUserList() {
+            const list = document.getElementById('usersList');
+            try {
+                const users = await sendRequest('/users', null, 'GET');
+                list.innerHTML = '';
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.textContent = user.username;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+
+        async function addRole() {
+            const rolename = document.getElementById('addRoleInput').value;
+
+            try {
+                const response = await sendRequest('/role/add', { rolename: rolename }, 'POST');
+                log(`Role "${rolename}" added successfully`);
+                updateRolesList();
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+
+        async function deleteRole() {
+            const rolename = document.getElementById('deleteRoleInput').value;
+
+            try {
+                const response = await sendRequest(`/role/delete?rolename=${rolename}`, null, 'DELETE');
+                log(`Role "${rolename}" deleted successfully`);
+                updateRolesList();
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+
+        async function addUsername() {
+            const username = document.getElementById('addUsernameInput').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await sendRequest('/user/add', { username: username, password: password }, 'POST');
+                log(`User "${username}" added successfully`);
+                updateUserList();
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+
+        async function deleteUsername() {
+            const username = document.getElementById('deleteUsernameInput').value;
+
+            try {
+                const response = await sendRequest(`/user/delete?username=${username}`, null, 'DELETE');
+                log(`User "${username}" deleted successfully`);
+                updateUserList();
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+    </script>
+
+    </script>
+</body>
+
+</html>

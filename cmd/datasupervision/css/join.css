@@ -13,12 +13,6 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-h2 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-}
-
 .join {
     display: block;
     flex-wrap: wrap;
@@ -81,12 +75,4 @@ select {
 
 .table-content tbody tr:nth-child(even) {
     background-color: #f9f9f9;
-}
-.top-bar {
-    background-color: #ccc;
-    color: white;
-    padding: 10px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
 }

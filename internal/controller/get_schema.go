@@ -2,6 +2,7 @@ package controller
 
 import (
 	"datasupervision/internal/service"
+	"encoding/json"
 	"html/template"
 	"net/http"
 
@@ -112,7 +113,13 @@ func (c *Controller) Graph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = tmpl.Execute(w, schema)
+	schemaJSON, err := json.Marshal(schema)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, struct{ SchemaJSON string }{SchemaJSON: string(schemaJSON)})
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table Join Example</title>
     <link rel="stylesheet" type="text/css" href="/css/join.css" />
+    <link rel="stylesheet"  type="text/css" href="/css/h.css"/>
+    <link rel="stylesheet"  type="text/css" href="/css/top-bar.css"/>
+    <link rel="stylesheet"  type="text/css" href="/css/select.css"/>
 </head>
 
 <body>
@@ -20,28 +23,28 @@
             <h2>Join Tables</h2>
             <form id="join-form" class="join" action="/{{.Schema}}/join" method="POST">
                 <label for="table1">Table 1:</label>
-                <select id="table1" name="table1" onchange="populateColumns('table1', 'column1')">
+                <select id="table1" name="table1" class="form-select" onchange="populateColumns('table1', 'column1')">
                     {{range $table, $columns := .Tables}}
                     <option value="{{$table}}">{{$table}}</option>
                     {{end}}
                 </select>
 
                 <label for="column1">Column from Table 1:</label>
-                <select id="column1" name="column1">
+                <select id="column1" name="column1" class="form-select">
                     <!-- Options will be populated via JavaScript -->
                 </select>
 
                 <br>
 
                 <label for="table2">Table 2:</label>
-                <select id="table2" name="table2" onchange="populateColumns('table2', 'column2')">
+                <select id="table2" name="table2" class="form-select" onchange="populateColumns('table2', 'column2')">
                     {{range $table, $columns := .Tables}}
                     <option value="{{$table}}">{{$table}}</option>
                     {{end}}
                 </select>
 
                 <label for="column2">Column from Table 2:</label>
-                <select id="column2" name="column2">
+                <select id="column2" name="column2" class="form-select">
                     <!-- Options will be populated via JavaScript -->
                 </select>
 

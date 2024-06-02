@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"datasupervision/internal/service"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
@@ -122,14 +124,40 @@ func (c *Controller) ApplyFilter(w http.ResponseWriter, r *http.Request) {
 	columnName := r.FormValue("columnName")
 	filterValue := r.FormValue("filterValue")
 
-	tableData, err := c.ConnectorDB.SelectWithFilter(schemaName, tableName, columnName, filterValue)
+	var err error
+
+	limit := 0
+	if r.FormValue("limit") != "" {
+		limit, err = strconv.Atoi(r.FormValue("limit"))
+		if err != nil {
+			log.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	page := 0
+	if r.FormValue("page") != "" {
+		page, err = strconv.Atoi(r.FormValue("page"))
+		if err != nil {
+			log.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	tableData, err := c.ConnectorDB.SelectWithFilter(schemaName, tableName, service.Filters{
+		ColumnName:  columnName,
+		FilterValue: filterValue,
+		Limit:       limit,
+		Offset:      (page - 1) * limit,
+	})
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Отправляем данные в формате HTML
 	response := TableDataResponse{
 		TableName: tableName,
 		Columns:   tableData.Columns,

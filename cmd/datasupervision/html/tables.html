@@ -7,6 +7,19 @@
     <title>Tables Information</title>
     <link rel="stylesheet" type="text/css" href="/css/tables.css" />
     <link rel="stylesheet" type="text/css" href="/css/logs.css" />
+    <link rel="stylesheet" type="text/css" href="/css/top-bar.css" />
+    <link rel="stylesheet" type="text/css" href="/css/tooltip.css" />
+    <link rel="stylesheet"  type="text/css" href="/css/select.css"/>
+
+    <script>
+        window.config = {
+            schemaName: "{{.SchemaName}}"
+        };
+    </script>
+    <script src="/js/table.js"></script>
+    <script src="/js/query.js"></script>
+    <script src="/js/download.js"></script>
+    <script src="/js/cud_row.js" defer></script>
 </head>
 
 <body>
@@ -55,151 +68,39 @@
         </div>
         <div class="log-info" id="log-info"></div>
     </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const openPopupButtons = document.querySelectorAll('.openPopupBtn');
-            const popups = document.querySelectorAll('.popup');
-            const closePopupButtons = document.querySelectorAll('.close');
+        function log(message) {
+            var infoHtml = message + "\n";
 
-            openPopupButtons.forEach((btn, index) => {
-                btn.addEventListener('click', function () {
-                    const popup = document.getElementById(`popup-${index}`);
-                    popup.style.display = 'flex';
-                });
-            });
-
-            closePopupButtons.forEach((btn, index) => {
-                btn.addEventListener('click', function () {
-                    const popup = document.getElementById(`popup-${index}`);
-                    popup.style.display = 'none';
-                });
-            });
-
-            window.addEventListener('click', function (event) {
-                popups.forEach((popup, index) => {
-                    if (event.target === popup) {
-                        popup.style.display = 'none';
-                    }
-                });
-            });
-        });
-
-        function getTableData(tableName) {
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var tableData = JSON.parse(xhr.responseText);
-                    displayTableData(tableName, tableData);
-                }
-            };
-            xhr.open("GET", "/{{.SchemaName}}/tabledata/" + tableName, true);
-            xhr.send();
+            document.getElementById("log-info").innerHTML = infoHtml;
         }
 
-        function downloadTableDataJson(tableName) {
-            fetch("/{{.SchemaName}}/download/json/" + tableName)
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = 'data.json';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(err => console.error('Download error:', err));
-        }
-
-        function handleFileImportJson(tableName) {
-            console.log("handleFileImportJson");
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.json';
-            fileInput.onchange = () => {
-                const file = fileInput.files[0];
-                if (file) {
-                    uploadFile(file);
-                }
-            };
-            fileInput.click();
-        }
-
-        function uploadFile(file) {
-            console.log("uploadFile");
-            const formData = new FormData();
-            formData.append('file', file);
-
-            fetch('/{{.SchemaName}}/insert-rows/json', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('File uploaded successfully', data);
-                })
-                .catch(error => {
-                    console.error('Error uploading file:', error);
-                });
-        }
-
-        function downloadTableDataCSV(tableName) {
-            console.log("test 2 downloadTableDataCVS");
-            fetch('/{{.SchemaName}}/download/csv/' + tableName)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = tableName + '.csv';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(error => console.error('There was a problem with the fetch operation:', error));
-        }
-
-        function handleFileImportCSV(tableName) {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.csv';
-            fileInput.onchange = () => {
-                const file = fileInput.files[0];
-                if (file) {
-                    uploadFileCSV(file, tableName);
-                }
-            };
-            fileInput.click();
-        }
-
-        function uploadFileCSV(file, tableName) {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            fetch(`/{{.SchemaName}}/insert-rows/csv?tableName=${tableName}`, {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('File uploaded successfully', data);
-                })
-                .catch(error => {
-                    console.error('Error uploading file:', error);
-                });
-        }
-
-        function applyFilter(tableName, tableColumn) {
+        function applyFilter(tableName) {
             var selectedColumn = document.getElementById("column-select").value;
             var filterValue = document.getElementById("filter-value").value;
+
+            var limit = document.getElementById("limit").value;
+            var page = document.getElementById("page").value;
+
+            var queryParams = {
+                tableName: tableName,
+                columnName: selectedColumn,
+                filterValue: filterValue,
+                limit: 0,
+                page: 0
+            };
+
+            if (limit && limit.trim() !== "") {
+                queryParams.limit = limit
+            }
+
+            if (page && page.trim() !== "") {
+                queryParams.page = page
+            }
+
+            var queryString = Object.keys(queryParams).map(function (key) {
+                return encodeURIComponent(key) + '=' + encodeURIComponent(queryParams[key]);
+            }).join('&');
 
             // Выполнение действий с выбранным столбцом и значением фильтра
             console.log("Применение фильтра:");
@@ -211,173 +112,81 @@
             xhr.onreadystatechange = function () {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var tableData = JSON.parse(xhr.responseText);
-                    displayTableData(tableName, tableData, selectedColumn, filterValue);
+                    displayTableData(tableName, tableData, true);
                 } else {
                     log(xhr.response);
                 }
             };
 
-            var params = "tableName" + "=" + tableName + "&" + "columnName" + "=" + selectedColumn + "&" + "filterValue" + "=" + filterValue;
-            xhr.open("GET", "/{{.SchemaName}}/applyfilter" + "?" + params, true);
+            xhr.open("GET", "/{{.SchemaName}}/applyfilter?" + queryString, true);
             xhr.send();
         }
 
-        function executeSQLQuery() {
-            var query = document.getElementById("sql-query").value;
+        function buildPanel(tableName, tableData, filterSet, insert) {
+            const panelDiv = document.createElement('div');
+            panelDiv.className = "panelDiv";
+            // Транзакция
+            const transactionDiv = document.createElement('div');
+            transactionDiv.className = "transactionDiv";
 
-            console.log("SQL Query:", query);
+            const transactionField = buildTransaction();
+            transactionDiv.appendChild(transactionField);
 
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    console.log(xhr.responseText);
-                    data = JSON.parse(xhr.responseText);
-                    console.log('Success:', data);
+            const addField = buildAddData(tableName, tableData, filterSet, insert);
+            transactionDiv.appendChild(addField);
+            panelDiv.appendChild(transactionDiv);
 
-                    const tableInfoDiv = document.createElement('div');
-                    tableInfoDiv.className = 'table-info';
-                    tableInfoDiv.id = 'table-info';
+            const filterFullDiv = document.createElement('div');
+            filterFullDiv.className = "filterFullDiv";
+            const filterDiv = document.createElement('div');
+            filterDiv.className = "filterDiv";
+            // Фильтры
+            const filterField = buildFilter(tableName, tableData, filterSet);
+            filterDiv.appendChild(filterField);
 
-                    const sqlInputDiv = document.createElement('div');
-                    sqlInputDiv.className = 'sql-input';
+            const collapsibleField = buildFilterOptions(tableName, tableData, filterSet);
+            filterDiv.appendChild(collapsibleField);
 
-                    const sqlQuery = document.getElementById("sql-query").value;
+            filterFullDiv.appendChild(filterDiv);
 
-                    const textarea = document.createElement('textarea');
-                    textarea.id = 'sql-query';
-                    textarea.placeholder = 'Enter SQL query';
-                    textarea.textContent = sqlQuery;
+            const applyButton = document.createElement('button');
+            applyButton.className = 'btn-1 btn-apply';
+            applyButton.textContent = 'Apply Filter';
 
-                    const executeButton = document.createElement('button');
-                    executeButton.textContent = 'Execute';
-                    executeButton.onclick = executeSQLQuery;
+            const resetButton = document.createElement('button');
+            resetButton.className = 'btn-1 btn-reset';
+            resetButton.textContent = 'Reset Filter';
+            if (filterSet) {
+                resetButton.style.display = "inline"
+            } else {
+                resetButton.style.display = "none"
+            }
+            resetButton.onclick = () => getTableData(tableName);
 
-                    sqlInputDiv.appendChild(textarea);
-                    sqlInputDiv.appendChild(executeButton);
+            applyButton.addEventListener('click', function () {
+                // Проверяем, заполнено ли хотя бы одно поле фильтра
+                const filterInput = document.getElementById('filter-value').value;
+                const limit = document.getElementById('limit').value;
+                const page = document.getElementById('page').value;
+                console.log(filterInput, limit, page);
 
-                    tableInfoDiv.appendChild(sqlInputDiv);
-
-                    if (data.Columns && data.Rows) {
-                        const tableData = buildTableData(data);
-                        tableInfoDiv.appendChild(tableData);
-                    } else {
-                        const noDataMessage = document.createElement('p');
-                        noDataMessage.textContent = 'No data available to show.';
-                        tableInfoDiv.appendChild(noDataMessage);
-                    }
-
-                    const tableInfoContainer = document.getElementById('table-info');
-                    tableInfoContainer.innerHTML = '';
-                    tableInfoContainer.appendChild(tableInfoDiv);
-                } else {
-                    log(xhr.response);
+                if ((filterInput !== null && filterInput.trim() !== '') ||
+                    (limit !== null && limit.trim() !== '') ||
+                    (page !== null && page.trim() !== '')) {
+                    console.log(resetButton);
+                    applyFilter(tableName);
                 }
-            };
+            });
 
-            var postData = { "query": query };
-            var url = `/{{.SchemaName}}/sql-input`;
-            xhr.open("POST", url, true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(JSON.stringify(postData));
+            filterFullDiv.appendChild(applyButton);
+            filterFullDiv.appendChild(resetButton);
+
+            panelDiv.appendChild(filterFullDiv);
+
+            return panelDiv;
         }
 
-        function log(message) {
-            var infoHtml = message + "\n";
-
-            document.getElementById("log-info").innerHTML = infoHtml;
-        }
-
-
-        function createSQLInput() {
-            const tableInfoDiv = document.createElement('div');
-            tableInfoDiv.className = 'table-info';
-            tableInfoDiv.id = 'table-info';
-
-            const sqlInputDiv = document.createElement('div');
-            sqlInputDiv.className = 'sql-input';
-
-            const textarea = document.createElement('textarea');
-            textarea.id = 'sql-query';
-            textarea.placeholder = 'Enter SQL query';
-
-            const executeButton = document.createElement('button');
-            executeButton.textContent = 'Execute';
-            executeButton.onclick = executeSQLQuery;
-
-            sqlInputDiv.appendChild(textarea);
-            sqlInputDiv.appendChild(executeButton);
-            tableInfoDiv.appendChild(sqlInputDiv);
-
-            document.getElementById('table-info').innerHTML = '';
-            document.getElementById('table-info').appendChild(tableInfoDiv);
-        }
-
-        function startTransaction() {
-            console.log("startTransaction");
-
-            document.getElementById("btn-transaction").style.display = 'none';
-            document.getElementById("btn-rollback").style.display = 'inline';
-            document.getElementById("btn-commit").style.display = 'inline';
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var tableData = JSON.parse(xhr.responseText);
-                    log("success")
-                } else {
-                    log(xhr.response);
-                }
-            };
-
-            xhr.open("GET", "/{{.SchemaName}}/begin-transaction", true);
-            xhr.send();
-        }
-
-        function Rollback() {
-            console.log("Rollback");
-
-            document.getElementById("btn-transaction").style.display = 'inline';
-            document.getElementById("btn-rollback").style.display = 'none';
-            document.getElementById("btn-commit").style.display = 'none';
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var tableData = JSON.parse(xhr.responseText);
-                    log("success")
-                } else {
-                    log(xhr.response);
-                }
-            };
-
-            xhr.open("GET", "/{{.SchemaName}}/rollback", true);
-            xhr.send();
-        }
-
-
-        function Commit() {
-            console.log("Commit");
-
-            document.getElementById("btn-transaction").style.display = 'inline';
-            document.getElementById("btn-rollback").style.display = 'none';
-            document.getElementById("btn-commit").style.display = 'none';
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var tableData = JSON.parse(xhr.responseText);
-                    log("success")
-                } else {
-                    log(xhr.response);
-                }
-            };
-
-            xhr.open("GET", "/{{.SchemaName}}/commit", true);
-            xhr.send();
-        }
-
-
-        function buildFilter(tableName, tableData, selectedColumn, filterValue, insert) {
+        function buildTransaction() {
             const filterDiv = document.createElement('div');
 
             const transactionButton = document.createElement('button');
@@ -398,7 +207,8 @@
             commitButton.onclick = Commit;
             commitButton.textContent = 'Commit';
 
-            if (document.getElementById("btn-transaction") && document.getElementById("btn-transaction").style.display == 'none') {
+            if (document.getElementById("btn-transaction") &&
+                document.getElementById("btn-transaction").style.display == 'none') {
                 transactionButton.style.display = 'none';
                 rollbackButton.style.display = 'inline';
                 commitButton.style.display = 'inline';
@@ -411,25 +221,65 @@
             filterDiv.appendChild(rollbackButton);
             filterDiv.appendChild(commitButton);
 
+            return filterDiv
+        }
+
+        function buildAddData(tableName, tableData, filterSet, insert) {
+            const filterDiv = document.createElement('div');
+            filterDiv.className = 'add-data';
+
+            const tableDataString = encodeURIComponent(JSON.stringify(tableData));
+
+            const addButton = document.createElement('button');
+            addButton.className = 'btn-1 btn-add';
+            addButton.textContent = 'Add Data';
+            addButton.onclick = () => showAddDataForm(tableName, tableDataString, filterSet);
+
+            console.log("insert", insert);
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'btn-1 btn-cancel';
+            cancelButton.textContent = 'Cancel';
+            cancelButton.onclick = () => closeAddDataForm(tableName, tableDataString, filterSet);
+
+            if (insert) {
+                cancelButton.style.display = 'inline';
+                addButton.style.display = 'none';
+            } else {
+                addButton.style.display = 'inline';
+                cancelButton.style.display = 'none';
+            }
+
+            filterDiv.appendChild(addButton);
+            filterDiv.appendChild(cancelButton);
+
+            return filterDiv
+        }
+
+        function buildFilter(tableName, tableData, filterSet) {
+            const filterDiv = document.createElement('div');
+            filterDiv.className = 'filter';
+
             const labelColumnSelect = document.createElement('label');
             labelColumnSelect.className = 'form-label';
             labelColumnSelect.htmlFor = 'column-select';
             labelColumnSelect.textContent = 'Select Column:';
             filterDiv.appendChild(labelColumnSelect);
 
-            const columnSelect = document.createElement('select');
-            columnSelect.id = 'column-select';
-            columnSelect.className = 'form-select';
-            tableData.Columns.forEach((column) => {
-                const option = document.createElement('option');
-                option.value = column;
-                option.textContent = column;
-                if (selectedColumn && selectedColumn == column) {
-                    option.selected = true;
-                }
-                columnSelect.appendChild(option);
-            });
-            filterDiv.appendChild(columnSelect);
+            if (filterSet) {
+                const filterValueInput = document.getElementById('column-select');
+                filterDiv.appendChild(filterValueInput);
+            } else {
+                const columnSelect = document.createElement('select');
+                columnSelect.id = 'column-select';
+                columnSelect.className = 'form-select';
+                tableData.Columns.forEach((column) => {
+                    const option = document.createElement('option');
+                    option.value = column;
+                    option.textContent = column;
+                    columnSelect.appendChild(option);
+                });
+                filterDiv.appendChild(columnSelect);
+            }
 
             const labelFilterValue = document.createElement('label');
             labelFilterValue.className = 'form-label';
@@ -437,58 +287,73 @@
             labelFilterValue.textContent = 'Filter Value:';
             filterDiv.appendChild(labelFilterValue);
 
-            const filterValueInput = document.createElement('input');
-            filterValueInput.type = 'text';
-            filterValueInput.id = 'filter-value';
-            filterValueInput.className = 'form-input';
-            if (filterValue) {
-                filterValueInput.value = filterValue;
-            }
-            filterDiv.appendChild(filterValueInput);
 
-            const applyButton = document.createElement('button');
-            applyButton.className = 'btn-1 btn-apply';
-            applyButton.textContent = 'Apply Filter';
-            applyButton.onclick = () => applyFilter(tableName, tableData.Columns[0]);
-            filterDiv.appendChild(applyButton);
-
-            if (filterValue) {
-                const resetButton = document.createElement('button');
-                resetButton.className = 'btn-1 btn-reset';
-                resetButton.textContent = 'Reset Filter';
-                resetButton.onclick = () => getTableData(tableName, tableData.Columns[0]);
-                filterDiv.appendChild(resetButton);
-            }
-
-            const tableDataString = encodeURIComponent(JSON.stringify(tableData));
-
-            if (insert) {
-                const cancelButton = document.createElement('button');
-                cancelButton.className = 'btn-1 btn-cancel';
-                cancelButton.textContent = 'Cancel';
-                if (filterValue) {
-                    cancelButton.onclick = () => closeAddDataForm(tableName, tableDataString, selectedColumn, filterValue);
-                } else {
-                    cancelButton.onclick = () => closeAddDataForm(tableName, tableDataString);
-                }
-                filterDiv.appendChild(cancelButton);
+            if (filterSet) {
+                const filterValueInput = document.getElementById('filter-value');
+                filterDiv.appendChild(filterValueInput);
             } else {
-                const addButton = document.createElement('button');
-                addButton.className = 'btn-1 btn-add';
-                addButton.textContent = 'Add Data';
-                if (filterValue) {
-                    addButton.onclick = () => showAddDataForm(tableName, tableDataString, selectedColumn, filterValue);
-                } else {
-                    addButton.onclick = () => showAddDataForm(tableName, tableDataString);
-                }
-                filterDiv.appendChild(addButton);
+                const filterValueInput = document.createElement('input');
+                filterValueInput.type = 'text';
+                filterValueInput.id = 'filter-value';
+                filterValueInput.className = 'form-input';
+                filterDiv.appendChild(filterValueInput);
             }
 
             return filterDiv;
         }
 
+        function buildFilterOptions(tableName, tableData, filterSet) {
+            const filterDiv = document.createElement('div');
 
-        function displayTableData(tableName, tableData, selectedColumn, filterValue, insert) {
+            const limitText = document.createElement('span');
+            limitText.textContent = 'Limit: ';
+            filterDiv.appendChild(limitText);
+
+            if (filterSet) {
+                const limitInput = document.getElementById('limit');
+                const clonedLimitInput = limitInput.cloneNode(true);
+                filterDiv.appendChild(clonedLimitInput);
+            } else {
+                const limitInput = document.createElement('input');
+                limitInput.className = 'form-select';
+                limitInput.id = 'limit';
+                limitInput.type = 'number';
+                limitInput.min = 1;
+                limitInput.
+                limitInput.addEventListener('input', function () {
+                    if (parseInt(limitInput.value) <= 0 || isNaN(parseInt(limitInput.value))) {
+                        limitInput.value = '';
+                    }
+                });
+                filterDiv.appendChild(limitInput);
+            }
+
+            const pageText = document.createElement('span');
+            pageText.textContent = 'Page: ';
+            filterDiv.appendChild(pageText);
+
+            if (filterSet) {
+                const pageInput = document.getElementById('page');
+                const clonedPageInput = pageInput.cloneNode(true);
+                filterDiv.appendChild(clonedPageInput);
+            } else {
+                const pageInput = document.createElement('input');
+                pageInput.className = 'form-select';
+                pageInput.id = 'page';
+                pageInput.type = 'number';
+                pageInput.min = 1;
+                pageInput.addEventListener('input', function () {
+                    if (parseInt(pageInput.value) <= 0 || isNaN(parseInt(pageInput.value))) {
+                        pageInput.value = '';
+                    }
+                });
+                filterDiv.appendChild(pageInput);
+            }
+
+            return filterDiv;
+        }
+
+        function displayTableData(tableName, tableData, filterSet, insert) {
             console.log("displayTableData", tableData);
             console.log("insert", insert);
 
@@ -497,7 +362,7 @@
             heading.textContent = `Table Data: ${tableData.TableName}`;
             tableInfo.appendChild(heading);
 
-            const filterField = buildFilter(tableName, tableData, selectedColumn, filterValue, insert);
+            const filterField = buildPanel(tableName, tableData, filterSet, insert);
             tableInfo.appendChild(filterField);
 
             if (insert) {
@@ -590,7 +455,6 @@
                         insertButton.onclick = () => insertRow(tableName, encodeURIComponent(JSON.stringify(tableData.Columns)));
                         actionCell.appendChild(insertButton);
                     } else {
-                        console.log(editRowIndex, rowIndex);
                         const actionDiv = document.createElement('div');
                         if (editRowIndex !== null && editRowIndex === rowIndex) {
                             console.log(editRowIndex, rowIndex);
@@ -630,14 +494,11 @@
                         input.type = 'text';
                         input.className = 'insert-section';
                         input.id = `update-value-${cellIndex}`;
-                        console.log(editRowIndex, rowIndex);
                         input.value = cell;
-                        console.log(editRowIndex, rowIndex);
                         cellElement.appendChild(input);
                     } else if (cell instanceof HTMLElement) {
                         cellElement.appendChild(cell);
                     } else {
-                        console.log("cell", cell);
                         if (cell) {
                             cellElement.textContent = cell;
                         } else {
@@ -670,7 +531,6 @@
                 var cellA = a.cells[columnIndex].innerText.toLowerCase();
                 var cellB = b.cells[columnIndex].innerText.toLowerCase();
 
-                // Проверка, являются ли значения числовыми
                 var numA = parseFloat(cellA);
                 var numB = parseFloat(cellB);
 
@@ -686,7 +546,6 @@
                 }
             });
 
-            // Перемещаем отсортированные строки обратно в таблицу
             rows.forEach(function (row) {
                 tbody.appendChild(row);
             });
@@ -696,140 +555,15 @@
             console.log('Sorting completed');
         }
 
-        function insertRow(tableName, columnsString) {
-            var columns = JSON.parse(decodeURIComponent(columnsString));
-            console.log("insertRow: columns:", columns);
-
-            var row = new Map();
-            columns.forEach(function (column, index) {
-                var insertValue = document.getElementById("insert-value-" + index).value;
-                console.log("insertValue", index, insertValue);
-                row.set(column, insertValue);
-                console.log("row", row);
-            });
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    console.log(xhr.responseText);
-                    data = JSON.parse(xhr.responseText);
-                    console.log('Success:', data);
-
-                    getTableData(tableName);
-                } else {
-                    log(xhr.response);
-                }
-            };
-
-            var rowObject = Object.fromEntries(row);
-
-            var postData = JSON.stringify({ "row": rowObject });
-            console.log("postData", postData);
-
-            var url = "/{{.SchemaName}}/insert-row" + "?" + "tableName" + "=" + tableName;
-            xhr.open("POST", url, true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(postData);
-        }
-
-        function editRow(tableName, rowIndex, tableDataString) {
-            var tableData = JSON.parse(decodeURIComponent(tableDataString));
-            var editTable = buildTableData(tableData, tableName, rowIndex, tableDataString);
-
-            const tableInfoContainer = document.getElementById("table-content");
-            tableInfoContainer.innerHTML = '';
-            tableInfoContainer.appendChild(editTable);
-        }
-
-        function updateRow(tableName, rowIndex, tableDataString, notUpdate) {
-            var tableData = JSON.parse(decodeURIComponent(tableDataString));
-            console.log("updateRow", tableName, rowIndex, tableData)
-
-            if (notUpdate) {
-                getTableData(tableName);
-                return
-            }
-
-            var row = {
-                "columns": [],
-                "oldRow": [],
-                "newRow": []
-            };
-            tableData.Columns.forEach(function (column, index) {
-                var newValue = document.getElementById("update-value-" + index).value;
-                var oldValue = tableData.Rows[rowIndex][index];
-                console.log("updateValue", index, oldValue, newValue);
-                row.columns.push(column);
-                row.oldRow.push(oldValue);
-                row.newRow.push(newValue);
-            });
-
-            console.log("row", row);
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    data = JSON.parse(xhr.responseText);
-                    console.log('Success:', data);
-
-                    getTableData(tableName);
-                } else {
-                    log(xhr.response);
-                }
-            };
-
-            var postData = JSON.stringify(row);
-            console.log("postData", postData);
-
-            var url = "/{{.SchemaName}}/update-row" + "?" + "tableName" + "=" + tableName;
-            xhr.open("PATCH", url, true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(postData);
-        }
-
-        function deleteRow(tableName, rowIndex, tableDataString) {
-            var tableData = JSON.parse(decodeURIComponent(tableDataString));
-            console.log("deleteRow", tableName, rowIndex, tableData)
-
-            var row = new Map();
-            tableData.Columns.forEach(function (column, index) {
-                var deleteValue = tableData.Rows[rowIndex][index];
-                console.log("insertValue", index, deleteValue);
-                row.set(column, deleteValue);
-            });
-
-            console.log("row", row);
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    data = JSON.parse(xhr.responseText);
-                    console.log('Success:', data);
-
-                    getTableData(tableName);
-                } else {
-                    log(xhr.response);
-                }
-            };
-
-            var rowObject = Object.fromEntries(row);
-            var postData = JSON.stringify({ "row": rowObject });
-            console.log("postData", postData);
-
-            var url = "/{{.SchemaName}}/delete-row" + "?" + "tableName" + "=" + tableName;
-            xhr.open("PATCH", url, true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(postData);
-        }
         // Функция для отображения формы ввода данных
-        function showAddDataForm(tableName, tableDataString, selectedColumn, filterValue) {
+        function showAddDataForm(tableName, tableDataString, filterSet) {
             var tableData = JSON.parse(decodeURIComponent(tableDataString));
-            displayTableData(tableName, tableData, selectedColumn, filterValue, true)
+            displayTableData(tableName, tableData, filterSet, true)
         }
-
-        function closeAddDataForm(tableName, tableDataString, selectedColumn, filterValue) {
+        // Функция для закрытия формы ввода данных
+        function closeAddDataForm(tableName, tableDataString, filterSet) {
             var tableData = JSON.parse(decodeURIComponent(tableDataString));
-            displayTableData(tableName, tableData, selectedColumn, filterValue)
+            displayTableData(tableName, tableData, filterSet)
         }
 
     </script>

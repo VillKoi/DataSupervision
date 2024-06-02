@@ -52,7 +52,7 @@ type ConnectorDB interface {
 
 	Select(query string, args ...any) (*service.TableData, error)
 	SelectTableData(schemaName, tableName string) (*service.TableData, error)
-	SelectWithFilter(schemaName, tableName, columnName, filterValue string) (*service.TableData, error)
+	SelectWithFilter(schemaName, tableName string, filter service.Filters) (*service.TableData, error)
 
 	CreateTable(schemaName string, tableData service.CreatedTableData) error
 	GetColumnTypes() []string
@@ -61,6 +61,17 @@ type ConnectorDB interface {
 	BeginTransaction() error
 	Rollback() error
 	Commit() error
+
+	ListRoles() ([]service.Role, error)
+	AddRole(roleName string) error
+	DeleteRole(roleName string) error
+
+	ListUsers() ([]service.User, error)
+	CreateUser(username, password string) error
+	DeleteUser(username string) error
+
+	AssignRoleToUser(username, rolename string) error
+	ListUsersForRole(role string) ([]service.User, error)
 }
 
 func (c *Controller) GetHealthcheck(w http.ResponseWriter, r *http.Request) {

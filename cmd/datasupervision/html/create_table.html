@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Table</title>
     <link rel="stylesheet" type="text/css" href="/css/create-table.css" />
+    <link rel="stylesheet"  type="text/css" href="/css/h.css"/>
+    <link rel="stylesheet"  type="text/css" href="/css/top-bar.css"/>
+    <link rel="stylesheet"  type="text/css" href="/css/logs.css"/>
+    <link rel="stylesheet"  type="text/css" href="/css/select.css"/>
 </head>
 
 <body>
@@ -31,6 +35,7 @@
             </div>
         </form>
     </div>
+    <div class="log-info" id="log-info"></div>
 
     <script>
         function addColumn() {
@@ -66,7 +71,8 @@
             // Вывод типа столбца
             const columnTypeSelect = document.createElement('select');
             columnTypeSelect.name = `columns[${columnIndex}][type]`;
-            columnTypeSelect.class = `columns[type]`;
+            // columnTypeSelect.class = `columns[type] `;
+            columnTypeSelect.class=`form-select`;
             columnTypeSelect.id = `columns[${columnIndex}][type]`;
             // Чекбокс not null
             const columnNotNull = document.createElement('input');
@@ -95,34 +101,28 @@
             foreignColumn.className = 'foreign-column';
             foreignColumn.id = `foreign-column[${columnIndex}][foreign]`;
 
-            // Очистка списка таблиц
             foreignTable.innerHTML = "";
 
             var tables = JSON.parse(`{{.Tables}}`);
             console.log("tables", tables);
 
-            // Заполнение списка таблиц
             tables.forEach(table => {
                 const option = document.createElement("option");
                 option.value = table;
-                option.textContent = table; // Важно использовать textContent для текстового содержимого
+                option.textContent = table;
                 foreignTable.appendChild(option);
             });
 
 
-            // Добавляем обработчик события change
             columnForeign.addEventListener('change', function () {
-                // Если чекбокс отмечен, показываем дополнительное текстовое поле
                 if (this.checked) {
                     foreignDiv.style.display = 'block';
                     populateColumns(`foreign-table[${columnIndex}][foreign]`, `foreign-column[${columnIndex}][foreign]`)
                 } else {
-                    // Если чекбокс не отмечен, скрываем дополнительное текстовое поле
                     foreignDiv.style.display = 'none';
                 }
             });
 
-            // Добавляем обработчик события change
             foreignTable.addEventListener('change', function () {
                 populateColumns(`foreign-table[${columnIndex}][foreign]`, `foreign-column[${columnIndex}][foreign]`)
             });
@@ -174,7 +174,6 @@
             // Получение выбранной таблицы
             const selectedTable = tableSelect.value;
 
-            // Получение столбцов для выбранной таблицы
             const tables = JSON.parse(`{{ .TablesJSON}}`);
             const columns = tables[selectedTable] || [];
 

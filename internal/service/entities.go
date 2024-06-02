@@ -62,3 +62,23 @@ type CreatedForeignKey struct {
 	ForeignTable  string `json:"foreignTable"`
 	ForeignColumn string `json:"foreignColumn"`
 }
+
+type User struct {
+	Username string `json:"username"`
+}
+
+type Role struct {
+	Rolename string `json:"rolename"`
+}
+
+type UserRoles struct {
+	Roles []Role
+	Users []User
+}
+
+type Filters struct {
+	ColumnName  string
+	FilterValue string
+	Limit       int
+	Offset      int
+}

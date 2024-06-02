@@ -19,11 +19,10 @@ body {
     margin: 0;
     flex: 1;
     max-width: 300px;
-    min-width: 250px;
+    min-width: 300px;
 }
 
 .table-item {
-    margin-bottom: 10px;
     display: flex;
 }
 
@@ -93,23 +92,6 @@ body {
     height: 30px;
     margin-left: 10px;
     margin-right: 10px;
-}
-
-.form-select {
-    margin-right: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #fff;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray"><path d="M5.5 7l3.5 3.5 3.5-3.5H5.5z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 10px;
-    font-size: 16px;
-    line-height: 1.5;
 }
 
 .sql-input {
@@ -211,15 +193,6 @@ body {
     font-size: 16px;
 }
 
-.top-bar {
-    background-color: #ccc;
-    color: white;
-    padding: 10px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-}
-
 .sql-input {
     display: flex;
     flex-direction: column;
@@ -304,4 +277,42 @@ button {
     margin: 10px;
     padding: 10px 20px;
     font-size: 16px;
+}
+
+.collapsible {
+    background-color: #777;
+    color: white;
+    cursor: pointer;
+    padding: 10px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+}
+.hidden {
+    display: none;
+}
+
+.active, .collapsible:hover {
+    background-color: #555;
+}
+
+.content {
+    padding: 0 18px;
+    display: none;
+    overflow: hidden;
+    background-color: #f9f9f9;
+}
+
+.transactionDiv {
+    display: inline-flex;
+}
+
+.filterFullDiv{
+    display: flex;
+}
+
+.panelDiv{
+    display: grid;
 }

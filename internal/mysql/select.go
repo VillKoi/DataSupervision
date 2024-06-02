@@ -89,16 +89,31 @@ func (db *DB) SelectTableData(schemaName, tableName string) (*service.TableData,
 	return tableData, nil
 }
 
-func (db *DB) SelectWithFilter(schemaName, tableName, columnName, filterValue string) (*service.TableData, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE %s = ?", schemaName, tableName, columnName)
-	// Выполняем запрос к базе данных с учетом фильтрации
+func (db *DB) SelectWithFilter(schemaName, tableName string, filter service.Filters) (*service.TableData, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s", schemaName, tableName)
+	args := []interface{}{}
 
-	tableData, err := db.Select(query, filterValue)
+	if filter.FilterValue != "" {
+		query = fmt.Sprintf("%s WHERE %s = ?", query, filter.ColumnName)
+		args = append(args, filter.FilterValue)
+	}
+
+	if filter.Limit > 0 {
+		query += " LIMIT ?"
+		args = append(args, filter.Limit)
+	}
+
+	if filter.Offset > 0 {
+		query += " OFFSET ?"
+		args = append(args, filter.Offset)
+	}
+
+	tableData, err := db.Select(query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	return tableData, err
+	return tableData, nil
 }
 
 func toPoint[T any](t T) *T {

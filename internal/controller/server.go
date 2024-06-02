@@ -106,6 +106,16 @@ func (s *Server) NewRouter(validation bool) (http.Handler, error) {
 	mux.HandleFunc("/{schemaName}/rollback", s.Controller.Rollback)
 	mux.HandleFunc("/{schemaName}/commit", s.Controller.Commit)
 
+	mux.HandleFunc("/roles-users", s.Controller.ListRolesAndUsers)
+	mux.HandleFunc("/roles", s.Controller.ListRolesJSON)
+	mux.HandleFunc("/role/add", s.Controller.AddRole)
+	mux.HandleFunc("/role/delete", s.Controller.DeleteRole)
+
+	mux.HandleFunc("/users", s.Controller.ListUserJSON)
+	mux.HandleFunc("/user/add", s.Controller.CreateUser)
+	mux.HandleFunc("/user/delete", s.Controller.DeleteUser)
+	mux.HandleFunc("/assign_role", s.Controller.AssignRoleToUser)
+
 	fsCss := http.FileServer(http.Dir("./css"))
 	mux.Handle("/css/*", http.StripPrefix("/css", fsCss))
 
