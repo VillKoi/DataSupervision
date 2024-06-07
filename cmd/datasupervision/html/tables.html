@@ -24,24 +24,24 @@
                 {{range $index, $table := .Tables}}
                 <li class="table-item">
                     <button class="button-table-name" onclick="getTableData('{{$table}}')">{{$table}}</button>
-                    <button id="openPopupBtn-{{$index}}" class="btn-2  btn-export openPopupBtn">Export/Import</button>
+                    <button id="openPopupBtn-{{$index}}" class="btn-2  btn-export-import openPopupBtn">Export/Import</button>
 
                     <div id="popup-{{$index}}" class="popup">
                         <div class="popup-content">
                             <span id="closePopupBtn-{{$index}}" class="close">&times;</span>
                             <div class="section">
                                 <h3>Export</h3>
-                                <button class="btn-1 btn-export"
+                                <button class="btn-1 btn-export-json"
                                     onclick="downloadTableDataJson('{{$table}}')">Json</button>
-                                <button class="btn-1 btn-download-cvs"
+                                <button class="btn-1 btn-export-cvs"
                                     onclick="downloadTableDataCSV('{{$table}}')">CSV</button>
                             </div>
 
                             <div class="section">
                                 <h3>Import</h3>
-                                <button class="btn-1 btn-import"
+                                <button class="btn-1 btn-import-json"
                                     onclick="handleFileImportJson('{{$table}}')">Json</button>
-                                <button class="btn-1 btn-other-import"
+                                <button class="btn-1 btn-import-csv"
                                     onclick="handleFileImportCSV('{{$table}}')">CSV</button>
                             </div>
 

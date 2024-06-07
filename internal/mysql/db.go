@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/url"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -53,21 +52,11 @@ func GenerateConnectionString(cfg *AuthConfig) (string, error) {
 	}
 
 	query := fmt.Sprintf(
-		"%s:%s@/%s",
-		cfg.Username, cfg.Password, cfg.Database,
+		"%s:%s@(%s:%s)/%s",
+		cfg.Username, cfg.Password,
+		cfg.Host, cfg.Port,
+		cfg.Database,
 	)
-
-	_ = url.URL{
-		// TODO: scheme в config
-		// Scheme: "jdbc:mysql",
-		User: url.UserPassword(cfg.Username, cfg.Password),
-		// Host:   cfg.Host + ":" + cfg.Port,
-		Path: cfg.Database,
-	}
-
-	// q := u.Query()
-	// q.Set("sslmode", cfg.SSLMode)
-	// u.RawQuery = q.Encode()
 
 	return query, nil
 }

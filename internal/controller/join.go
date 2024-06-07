@@ -81,7 +81,7 @@ func (c *Controller) JoinHandler(w http.ResponseWriter, r *http.Request) {
 	table2 := r.FormValue("table2")
 	column2 := r.FormValue("column2")
 
-	results, err := c.ConnectorDB.Join(table1, column1, table2, column2)
+	results, err := c.ConnectorDB.Join(schemaName, table1, column1, table2, column2)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

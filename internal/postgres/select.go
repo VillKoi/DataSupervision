@@ -49,7 +49,7 @@ func (db *DB) Select(query string, args ...any) (*service.TableData, error) {
 }
 
 func (db *DB) SelectTableData(schemaName, tableName string) (*service.TableData, error) {
-	query := "SELECT * FROM " + tableName
+	query := "SELECT * FROM " + schemaName + "." + tableName
 
 	tableData, err := db.Select(query)
 	if err != nil {
@@ -60,7 +60,7 @@ func (db *DB) SelectTableData(schemaName, tableName string) (*service.TableData,
 }
 
 func (db *DB) SelectWithFilter(schemaName, tableName, columnName, filterValue string) (*service.TableData, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = $1", tableName, columnName)
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE %s = $1", schemaName, tableName, columnName)
 
 	tableData, err := db.Select(query, filterValue)
 	if err != nil {

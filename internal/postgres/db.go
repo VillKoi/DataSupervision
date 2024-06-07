@@ -62,7 +62,6 @@ func GenerateConnectionString(cfg *AuthConfig) (string, error) {
 	}
 
 	u := url.URL{
-		// TODO: scheme в config
 		Scheme: "postgres",
 		User:   url.UserPassword(cfg.Username, cfg.Password),
 		Host:   cfg.Host + ":" + cfg.Port,

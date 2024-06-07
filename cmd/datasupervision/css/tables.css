@@ -155,8 +155,7 @@ body {
 }
 
 .btn-reset,
-.btn-cancel,
-.btn-download-cvs {
+.btn-cancel {
     background-color: #daa209;
 }
 
@@ -164,7 +163,8 @@ body {
 .btn-insert,
 .btn-update,
 .btn-commit,
-.btn-import {
+.btn-import-csv,
+.btn-export-cvs {
     background-color: #1bae39;
 }
 
@@ -183,7 +183,9 @@ body {
 .btn-apply,
 .btn-edit,
 .btn-transaction,
-.btn-export {
+.btn-export-json,
+.btn-import-json,
+.btn-export-import {
     background-color: #007bff;
 }
 
@@ -254,12 +256,6 @@ body {
 
 body {
     font-family: Arial, sans-serif;
-}
-
-#openPopupBtn {
-    margin: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
 }
 
 .popup {

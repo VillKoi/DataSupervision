@@ -37,3 +37,14 @@ document.addEventListener('DOMContentLoaded', function() {
     dbTypeSelector.addEventListener('change', updateFields);
     updateFields();
 });
+
+document.getElementById('dbType').addEventListener('change', function() {
+    var selectedValue = this.value;
+    var databaseGroup = document.getElementById('databaseGroup');
+
+    if (selectedValue === 'PostgreSQL') {
+        databaseGroup.classList.remove('hidden');
+    } else if (selectedValue === 'MySQL') {
+        databaseGroup.classList.add('hidden');
+    }
+});

@@ -7,7 +7,7 @@ func (db *DB) GetDatabases() ([]string, error) {
 func (db *DB) GetSchemas() ([]string, error) {
 	rows, err := db.DBConn.Query("SELECT schema_name FROM information_schema.schemata")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer rows.Close()
 
